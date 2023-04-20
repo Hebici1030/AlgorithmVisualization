@@ -187,20 +187,9 @@ class AnimationWidget(QWidget):
                     an.start()
                     bn.start()
 
-                    # self.rectList[self.indexJ+1].setRect(QRect(
-                    #     QPoint(self.rectList[self.indexJ+1].rect.x() - self.baseWidget, \
-                    #            self.rectList[self.indexJ+1].rect.y()), \
-                    #     self.rectList[self.indexJ+1].rect.size()))
-                    #重绘状态
-                    # self.rectList[self.indexJ + 1].status = STATUS.UNSROTED
-                    # self.rectList[self.indexJ + 1].repaint()
-                    #交换位置
                     self.rectList[self.indexJ],self.rectList[self.indexJ+1] = \
                         self.rectList[self.indexJ+1], self.rectList[self.indexJ]
-                    # self.rectList[self.indexJ + 1].repaint()
-                    # self.rectList[self.indexJ].repaint()
-                    # self.rectList[self.indexJ].status = STATUS.UNSROTED
-                    # self.rectList[self.indexJ].repaint()
+
                     self.indexJ+=1
                     return
                 self.rectList[self.indexJ + 1].status = STATUS.INDEXJ
