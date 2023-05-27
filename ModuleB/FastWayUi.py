@@ -1,19 +1,15 @@
+import re
+
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMainWindow
 import matplotlib.pyplot  as plt
-from  matplotlib import *
 from matplotlib.backends.backend_template import FigureCanvas
-from matplotlib.figure import Figure
-import numpy as np
-from matplotlib.pyplot import figure
-from PyQt5.QtCore import *
-from numpy import linspace, pi
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+
+from ModuleB.CustomObject import CPU, Task, Theme
 from ModuleB.WhoFaster import Ui_MainWindow
-from ModuleBase.BaseObject import CPU, Task, PlotSignal, TimeTag
-from CustomObject import CustomTreeItem
+from ModuleBase.BaseObject import TimeTag
+
 import sys
 
 
@@ -23,132 +19,279 @@ class Faster(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(MainWindow=self)
-        self.initValue()
         self.signalConnect()
+        self.CpuMap = {}
+        self.ThemeMap = {}
+        self.initValue()
 
     def initValue(self):
         self.TaskItem = self.ui.Inventory.topLevelItem(0)
         self.ComputerItem = self.ui.Inventory.topLevelItem(1)
-        self.ui.Inventory.setUi(self.ui)
-        cpu = CPU()
-        cpu.initialValue(200,"PX-A")
-        cpu2 = CPU()
-        cpu2.initialValue(100, "PX-B")
-        task = Task()
-        task.initalTitle("字符串匹配","测试")
-        task1 =  Task()
-        task1.initialValue("字符串匹配",800,"测试","O(N^K),K=2")
-        task2 = Task()
-        task2.initialValue("字符串匹配", 800, "测试", "O(NLOGN)")
-        self.TaskItem.addChild(task)
-        task.addChild(task1)
-        task.addChild(task2)
-        self.ComputerItem.addChild(cpu)
-        self.ComputerItem.addChild(cpu2)
+        self.timetag = TimeTag()
+        self.ComputerItem.addChild(CPU("IPX-2000",400))
+        self.ComputerItem.addChild(CPU("IPX-200",200))
+        theme = Theme("字符串匹配","字符串匹配")
+        self.ThemeMap["字符串匹配"] = theme
+        self.TaskItem.addChild(theme)
+        self.ui.TaskTheme.addItem("字符串匹配", theme)
+        theme.addChild(Task("暴力破解",1000,"O(N^2)"))
+        theme.addChild(Task("KMP算法",1000,self.timetag.BIGO_N))
+        self.ui.TimeComplex_2.addItem(self.timetag.CONSTANT)
+        self.ui.TimeComplex_2.addItem(self.timetag.LOGN)
+        self.ui.TimeComplex_2.addItem(self.timetag.BIGO_N)
+        self.ui.TimeComplex_2.addItem(self.timetag.NLOGN)
+        self.ui.TimeComplex_2.addItem("O(N^2)")
+        self.ui.TimeComplex_2.addItem("O(N^3)")
+        self.ui.TimeComplex_2.addItem("O(2^N)")
+        self.ui.TimeComplex_2.addItem("O(3^N)")
+        self.AlgSampleNum = 100
+        self.CpuSampleNUm = 100
         self.plot_()
 
     def signalConnect(self):
         self.ui.add_cpu.clicked.connect(self.AddComputerItem)
         self.ui.del_cpu.clicked.connect(self.DelComputerItem)
+        self.ui.Inventory.signal.start_plot_sign.connect(self.startPlot)
+        self.ui.AddTheme.clicked.connect(self.AddTheme)
+        self.ui.DelTheme.clicked.connect(self.DelTheme)
         self.ui.add_task_btn.clicked.connect(self.AddTaskItem)
-        self.signal = PlotSignal()
-        self.signal.start_plot_sign.connect(self.startPlot)
-        self.ui.Inventory.setSignal(self.signal)
-
-
+        self.ui.del_task_btn.clicked.connect(self.DelTaskItem)
+        self.ui.Inventory.signal.algsign.connect(self.AlgDetail)
+        self.ui.Inventory.signal.cpusign.connect(self.CpuDetail)
+        self.ui.Inventory.signal.algdetailsign.connect(self.changeInfo)
+        self.ui.Inventory.signal.algThemesign.connect(self.changeInfo)
+        self.ui.Inventory.signal.cpudetailsign.connect(self.changeInfo)
+    def changeInfo(self,item):
+        if isinstance(item,Theme):
+            self.ui.themeTitle.setText(item.title)
+            self.ui.themeDesc.setText(item.desc)
+        elif isinstance(item,Task):
+            self.ui.AlgName.setText(item.title)
+            self.ui.In_Size.setText(str(item.Input))
+            self.ui.textEdit.setText(item.descri)
+            for i in range(self.ui.TimeComplex_2.count()):
+                if self.ui.TimeComplex_2.itemText(i) == item.timeComplex:
+                    self.ui.TimeComplex_2.setCurrentIndex(i)
+        elif isinstance(item,CPU):
+            self.ui.name_edit.setText(item.name)
+            self.ui.ipx_edit.setText(str(item.ipx))
     def AddComputerItem(self):
-        cpu = CPU()
-        str_name = self.ui.name_edit.text()
-        str_ipx = self.ui.ipx_edit.text()
-        if(str_name == '' and str_ipx == ''):
-            print("禁止为空")
+        if self.ui.name_edit.text() == "":
             return
-        cpu.initialValue(int(str_ipx),str_name)
+        if not self.ui.ipx_edit.text().isdigit():
+            return
+        name = self.ui.name_edit.text()
+        ipx = int(self.ui.ipx_edit.text())
+        if ipx <= 0:
+            return
+        if self.CpuMap.get(name) != None:
+            return
+        cpu = CPU(name,ipx)
+        self.CpuMap[name] = cpu
         self.ComputerItem.addChild(cpu)
 
     def DelComputerItem(self):
-        strname = self.ui.name_edit.text()
-        if(strname==''):
-             print("禁止为空ID")
-        for i in range(self.ComputerItem.childCount()) :
-            child = self.ComputerItem.child(i)
-            print(child.text(0))
-            print(strname)
-            if child.text(0).__eq__(strname):
-                self.ComputerItem.removeChild(child)
+        if self.ui.name_edit.text() == "":
+            return
+        name = self.ui.name_edit.text()
+        if self.CpuMap.get(name) == None:
+            return
+        self.ComputerItem.removeChild(self.CpuMap[name])
+        del self.CpuMap[name]
+    def AddTheme(self):
+        title = self.ui.themeTitle.text()
+        desc = self.ui.Desc.text()
+        if title == "" or desc == "":
+            return
+        if self.ThemeMap.get(title) != None:
+            return
+        tempTheme = Theme(title,desc)
+        self.ThemeMap[title] = tempTheme
+        self.TaskItem.addChild(tempTheme)
+        self.ui.TaskTheme.addItem(title,tempTheme)
+    def DelTheme(self):
+        title = self.ui.themeTitle.text()
+        if title == "":
+            return
+        if self.ThemeMap.get(title) == None:
+            return
+        self.TaskItem.removeChild(self.ThemeMap[title])
+        index = self.ui.TaskTheme.findText(title)
+        self.ui.TaskTheme.removeItem(index)
+        del self.ThemeMap[title]
 
     def AddTaskItem(self):
-
-        title = self.ui.In_title.text()
-        size = self.ui.In_Size.text()
-        comp = self.ui.In_Complex.text()
+        if self.ui.TaskTheme.currentText() == "" or self.ui.TaskTheme.currentText() == None :
+            return
+        if self.ui.TimeComplex_2.currentText() == "" or self.ui.TimeComplex_2.currentText() == None:
+            return
+        if  self.ui.AlgName.text()=="" or self.ui.In_Size.text() == "" :
+            return
+        insize = int(self.ui.In_Size.text())
+        if insize <= 100:
+            insize=100
+        algname = self.ui.AlgName.text()
         desc = self.ui.textEdit.toPlainText()
-        if(bool(title) and (not bool(size and comp and desc))):
-            task = Task()
-            task.initalTitle(title,desc)
-            self.TaskItem.addChild(task)
+        tempTask = Task(algname,insize,self.ui.TimeComplex_2.currentText(),desc)
+        theme :Theme= self.ui.TaskTheme.itemData(0)
+        if theme.TaskMap.get(tempTask.KeyStr()) != None:
             return
-        if not bool(title and size and comp and desc) :
-            print("输入完整")
+        theme.addChild(tempTask)
+        theme.TaskMap[tempTask.KeyStr()] = tempTask
+
+    def DelTaskItem(self):
+        if self.ui.TaskTheme.currentText() == "" or self.ui.TaskTheme.currentText() == None :
             return
-        task = Task()
-        task.initialValue(title, int(size), desc, comp)
-        for i in range(self.TaskItem.childCount()):
-            if title == self.TaskItem.child(i).text(0):
-                self.TaskItem.child(i).addChild(task)
-                return
-        print("没有找到父类，请检查输入")
+        if self.ui.TimeComplex_2.currentText() == "" or self.ui.TimeComplex_2.currentText() == None:
+            return
+        if  self.ui.AlgName.text()=="" or self.ui.In_Size.text() == "" :
+            return
+        insize = int(self.ui.In_Size.text())
+        if insize <= 100:
+            return
+        algname = self.ui.AlgName.text()
+        desc = self.ui.textEdit.toPlainText()
+        tempTask = Task(algname, insize, self.ui.TimeComplex_2.currentText(),desc)
+        theme: Theme = self.ui.TaskTheme.itemData(0)
+        if theme.TaskMap.get(tempTask.KeyStr()) == None:
+            return
+        theme.removeChild(theme.TaskMap[tempTask.KeyStr()])
+        del theme.TaskMap[tempTask.KeyStr()]
+    def AlgDetail(self):
+        algtask: Task = self.ui.Inventory.AlgTask
+        algcpu: CPU = self.ui.Inventory.AlgCPU
+        algListX = []
+        algListY = []
+        for i in range(0,algtask.Input,int(algtask.Input/(algtask.Input/2))):
+            algListX.append(i)
+        for i in algListX:
+            algListY.append(self.timetag.calculator(expr=algtask.timeComplex,N=i))
+        str = "任务:\n任务简称：{}\n任务算法复杂度:{}\n任务输入规模{}\n任务问题规模:{}\n电脑:\n名称:{}\nIPX:{}" \
+            .format(algtask.title,algtask.timeComplex,algtask.Input.__str__(),algListY[-1].__str__(),algcpu.name,algcpu.ipx.__str__())
+        self.ui.atitle.setText("任务简称：{}".format(algtask.title))
+        self.ui.aalg.setText("任务算法复杂度:{}".format(algtask.timeComplex))
+        self.ui.algoutput.setText("任务问题规模:{}".format(algtask.Input.__str__()))
+        self.ui.label_4.setText("任务问题输出规模:{}".format(algListY[-1].__str__()))
+        self.ui.acpuname.setText("电脑名称：{}".format(algcpu.name))
+        self.ui.aipx.setText("电脑IPX：{}".format(algcpu.ipx.__str__()))
+        self.algfig.clf()
+        self.ui.AlgLayout.removeWidget(self.algcavans)
+        self.aax = self.algfig.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.aax.set_xlim([0, algListX[-1]+10])
+        self.aax.set_ylim([0, algListY[-1]+100])
+        self.aax.set_xlabel("Input")
+        self.aax.set_ylabel("Output")
+        self.aax.set_title("Algorithm")
+        self.aax.plot(algListX, algListY,label="Algorithm")
+        self.algfig.legend()
+        self.algcavans = FigureCanvas(self.algfig)
+        self.ui.AlgLayout.addWidget(self.algcavans)
 
-        # if (str_name == '' and str_ipx == ''):
-        #     print("禁止为空")
-        #     return
-        # cpu.initialValue(int(str_ipx), str_name)
-        # self.ComputerItem.addChild(cpu)
-
+    def CpuDetail(self):
+        comtask: Task = self.ui.Inventory.ComTask
+        comcpu: CPU = self.ui.Inventory.ComCpu
+        cpuListX = []
+        cpuListY = []
+        for i in range(0, comtask.Input, int(comtask.Input / (comtask.Input / 2))):
+            cpuListX.append(i)
+        for i in cpuListX:
+            cpuListY.append(self.timetag.calculator(expr=comtask.timeComplex, N=i))
+        str = "任务:\n任务简称:{}\n任务算法复杂度:{}\n任务输入规模:{}\n任务问题规模:{}\n电脑:\n名称:{}\nIPX:{}" \
+            .format(comtask.title, comtask.timeComplex, comtask.Input.__str__(), cpuListY[-1].__str__(), comcpu.name,
+                    comcpu.ipx.__str__())
+        self.ui.label_11.setText("任务简称：{}".format(comtask.title))
+        self.ui.label_12.setText("任务算法复杂度:{}".format(comtask.timeComplex))
+        self.ui.label_13.setText("任务问题规模:{}".format(comtask.Input.__str__()))
+        self.ui.label_5.setText("任务问题输出规模:{}".format(cpuListY[-1].__str__()))
+        self.ui.label_14.setText("电脑名称：{}".format(comcpu.name))
+        self.ui.label_15.setText("电脑IPX：{}".format(comcpu.ipx.__str__()))
+        self.cpufig.clf()
+        self.ui.CpuLayout.removeWidget(self.cpucavans)
+        self.cax = self.cpufig.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.cax.set_xlim([0, cpuListX[-1]+10])
+        self.cax.set_ylim([0, cpuListY[-1]+100])
+        self.cax.set_xlabel("Input")
+        self.cax.set_ylabel("Output")
+        self.cax.set_title("CPU")
+        self.cax.plot(cpuListX, cpuListY,label="Algorithm")
+        self.cpufig.legend()
+        self.cpucavans = FigureCanvas(self.cpufig)
+        self.ui.CpuLayout.addWidget(self.cpucavans)
     def startPlot(self):
         algtask:Task = self.ui.Inventory.AlgTask
         algcpu:CPU = self.ui.Inventory.AlgCPU
         comtask:Task = self.ui.Inventory.ComTask
         comcpu:CPU= self.ui.Inventory.ComCpu
 
-        algtotal = int(TimeTag().calculator(algtask.timeComplex,algtask.Input))
-        comtotal = int(TimeTag().calculator(comtask.timeComplex,comtask.Input))
+        algListX = []
+        cpuListX = []
+        algListY = []
+        cpuListY = []
+        for i in range(0,algtask.Input,int(algtask.Input/(algtask.Input/2))):
+            algListX.append(i)
+        for i in range(0,comtask.Input,int(comtask.Input/(comtask.Input/2))):
+            cpuListX.append(i)
+        for i in algListX:
+            algListY.append(self.timetag.calculator(expr=algtask.timeComplex,N=i))
+        for i in cpuListX:
+            cpuListY.append(self.timetag.calculator(expr=comtask.timeComplex,N=i))
 
-        algx = range(0,algtotal,int(algtotal/40))
-        comx = range(0,comtotal,int(comtotal/40))
-        algy = []
-        comy = []
-
-        for i in algx:
-            algy.append(i/algcpu.ipx)
-        for i in comx:
-            comy.append(i/comcpu.ipx)
+        finalalgYListY = []
+        finalcouListY = []
+        for i in algListY:
+            finalalgYListY.append(i/algcpu.ipx)
+        for i in cpuListY:
+            finalcouListY.append(i/comcpu.ipx)
         self.fig.clf()
         self.ui.VisualLayout.removeWidget(self.cavans)
-        # self.fig.plot(list(algx),algy)
-        # self.fig.plot(list(comx),comy)
-
+        plt.ion()
         self.ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        self.ax.set_xlim([0, min(algtotal,comtotal)])
-        self.ax.set_ylim([0, min(algy[-1],comy[-1])])
-        # plt.xlabel("任务量")
-        # plt.ylabel("任务量/秒")
-        self.ax.plot(list(algx),algy,"r*-",label="更快的算法")
-        self.ax.plot(list(comx),comy,"g+--",label="更快的电脑")
+        self.ax.set_xlim([0, max(algtask.Input,comtask.Input)])
+        self.ax.set_ylim([0, max(finalalgYListY[-1],finalcouListY[-1])])
+        self.ax.set_xlabel("Input")
+        self.ax.set_ylabel("Time")
+        self.ax.set_title("Who is Faster?")
+        self.ax.plot(algListX,finalalgYListY,label="Faster Algorithm")
+        self.ax.plot(cpuListX,finalcouListY,label="Faster Computer")
+        self.fig.legend()
         self.cavans = FigureCanvas(self.fig)
-        # 将绘制好的图像设置为中心 Widget
         self.ui.VisualLayout.addWidget(self.cavans)
 
     def plot_(self):
         self.fig = plt.Figure()
         self.ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        self.ax.set_xlim([1, 10000])
-        self.ax.set_ylim([1, 10000])
+        self.ax.set_xlim([1, 1000])
+        self.ax.set_ylim([1, 1000])
+        self.ax.set_xlabel("Input")
+        self.ax.set_ylabel("Time")
+        self.ax.set_title("Who is Faster?")
         self.cavans = FigureCanvas(self.fig)
         # 将绘制好的图像设置为中心 Widget
         self.ui.VisualLayout.addWidget(self.cavans)
 
+        self.cpufig = plt.Figure()
+        self.cax = self.cpufig.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.cax.set_xlim([1, 1000])
+        self.cax.set_ylim([1, 1000])
+        self.cax.set_title("Algorithm")
+        self.cpucavans = FigureCanvas(self.cpufig)
+        # 将绘制好的图像设置为中心 Widget
+        self.ui.CpuLayout.addWidget(self.cpucavans)
 
+        self.algfig = plt.Figure()
+        self.aax = self.algfig.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.aax.set_xlim([1, 1000])
+        self.aax.set_ylim([1, 1000])
+        self.aax.set_title("Computer")
+        self.algcavans = FigureCanvas(self.algfig)
+        # 将绘制好的图像设置为中心 Widget
+        self.ui.AlgLayout.addWidget(self.algcavans)
+
+def FastWayStart():
+    # app = QtWidgets.QApplication(sys.argv)
+    win = Faster()
+    win.show()
+    # sys.exit(app.exec_())
 
 
 

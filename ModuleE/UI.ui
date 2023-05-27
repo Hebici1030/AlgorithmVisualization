@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1054</width>
-    <height>799</height>
+    <width>1166</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1030</width>
-         <height>724</height>
+         <width>1142</width>
+         <height>830</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -52,13 +52,45 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>978</width>
-                  <height>449</height>
+                  <width>5555</width>
+                  <height>55555</height>
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgb(170, 255, 255);
-border-color: rgb(0, 0, 0);</string>
+                 <string notr="true"/>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_9">
+                 <item>
+                  <widget class="QWidget" name="widget_3" native="true">
+                   <layout class="QHBoxLayout" name="horizontalLayout_10">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <layout class="QVBoxLayout" name="verticalLayout_7"/>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
                 </property>
                </widget>
               </item>
@@ -131,19 +163,30 @@ border-color: rgb(0, 0, 0);</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTextBrowser" name="ListBrowser">
+                 <widget class="QWidget" name="widget_6" native="true">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>100</width>
-                    <height>0</height>
+                    <width>500</width>
+                    <height>200</height>
                    </size>
                   </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>500</width>
+                    <height>200</height>
+                   </size>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_8">
+                   <item>
+                    <layout class="QVBoxLayout" name="verticalLayout_6"/>
+                   </item>
+                  </layout>
                  </widget>
                 </item>
                </layout>
@@ -167,20 +210,10 @@ border-color: rgb(0, 0, 0);</string>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>978</width>
-                  <height>449</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(170, 255, 255);
-border-color: rgb(0, 0, 0);</string>
-                </property>
                </widget>
               </item>
               <item>
-               <widget class="Line" name="line_2">
+               <widget class="Line" name="line_6">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -290,25 +323,37 @@ border-color: rgb(0, 0, 0);</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="Line" name="line">
+                 <widget class="Line" name="line_5">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTextBrowser" name="MapINFO">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
+                 <widget class="QWidget" name="widget_5" native="true">
                   <property name="minimumSize">
                    <size>
-                    <width>100</width>
+                    <width>500</width>
                     <height>0</height>
                    </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>300</height>
+                   </size>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_7">
+                   <item>
+                    <widget class="QTextBrowser" name="textBrowser"/>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="Line" name="line">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
                   </property>
                  </widget>
                 </item>
@@ -331,7 +376,7 @@ border-color: rgb(0, 0, 0);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1054</width>
+     <width>1166</width>
      <height>26</height>
     </rect>
    </property>

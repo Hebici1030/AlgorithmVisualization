@@ -46,6 +46,21 @@
               <height>0</height>
              </size>
             </property>
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="layoutMode">
+             <enum>QListView::SinglePass</enum>
+            </property>
+            <property name="gridSize">
+             <size>
+              <width>5</width>
+              <height>5</height>
+             </size>
+            </property>
+            <property name="itemAlignment">
+             <set>Qt::AlignHCenter</set>
+            </property>
            </widget>
           </item>
           <item>
