@@ -136,8 +136,11 @@ for i in range(len(ax)):
 tempAy[tempAy.index(max(tempAy))] = 20000000
 tempAy[tempAy.index(max(tempAy))] = 20000000
 from matplotlib.ticker import FuncFormatter
+print(tempAx)
 plt.rcParams['figure.figsize']=(12.8, 7.2)
 dates = [dt.datetime.strptime(date,"%Y-%m-%d")for date in tempAx]
+print(dates)
+print(tempAy)
 fig, ax = plt.subplots()
 ax.plot(dates, tempAy)
 import matplotlib.dates as mdates

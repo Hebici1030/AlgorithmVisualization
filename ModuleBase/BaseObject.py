@@ -217,8 +217,9 @@ class QCustomizeHash(QWidget):
         self.RectList :List[QRect]= []
         self.SlotNumList :List[List[int]] = []
         self.currentIndex = -1
+        self.prvIndex = -1
         self.currentRectIndex = 0
-        self.dense = 0.2
+        self.dense = 0.4
         self.size = 0
         self.Initalcapacity = 0
         self.capacity = 0
@@ -234,33 +235,16 @@ class QCustomizeHash(QWidget):
         self.LineCollideTimer = QTimer()
         self.LineCollideTimer.setInterval(self.AnimationTime)
         self.LineCollideTimer.timeout.connect(self.LineCollide)
+        self.DoubleCollideTiemr = QTimer()
+        self.DoubleCollideTiemr.setInterval(self.AnimationTime)
+        self.DoubleCollideTiemr.timeout.connect(self.DoubleCollide)
         self.Target = 0
         self.collpseTime = 0
         self.message = hashSign()
         #适配拉链法
     def wheelEvent(self, a0: QtGui.QWheelEvent):
-        # delta = a0.angleDelta()/8
-        # print(delta.y())
-        # print(delta.x())
-        #
-        # if not delta.isNull():
-        #     # vertical scroll
-        #     print(delta.y())
-        #     print(delta.x())
-        #     if delta.y() > 0:
-        #         rect = self.geometry()
-        #         self.setGeometry(rect.x(),rect.y()-10,rect.width(),rect.height())
-        #     else:
-        #         rect = self.geometry()
-        #         self.setGeometry(rect.x(), rect.y() + 10, rect.width(), rect.height())
-        # else:
-        #     print("delta.isNull")
-        # a0.accept()
         super(QCustomizeHash, self).wheelEvent(a0)
         angle = a0.angleDelta()/8
-        toWord = angle.y()
-        print(self.geometry().y())
-
         if angle.y() > 0:
             rect = self.geometry()
             self.setGeometry(rect.x(), rect.y() - 10, rect.width(), rect.height())
@@ -279,6 +263,7 @@ class QCustomizeHash(QWidget):
         self.Initalcapacity = int(self.size*self.dense)
         self.setGeometry(self.startx,self.starty,self.RectSize.width(),size*self.RectSize.height())
         self.currentIndex = -1
+        self.prvIndex = -1
         self.currentRectIndex = 0
         self.capacity = self.Initalcapacity
         self.collpseTime = 0
@@ -298,16 +283,50 @@ class QCustomizeHash(QWidget):
         animation.start()
     def ModHash(self,num :int):
         return num % len(self.NumList)
+    def DoubleModHash(self,num:int):
+        return [(num+self.collpseTime*self.collpseTime)%len(self.NumList),(num-self.collpseTime*self.collpseTime)%len(self.NumList)]
+    def DoubleCollide(self):
+        if self.capacity == len(self.NumList):
+            self.message.stop.emit()
+            self.DoubleCollideTiemr.stop()
+        if self.NumList[self.currentIndex] != "None" :
+            if(self.NumList[self.currentIndex]==self.Target):
+                self.DoubleCollideTiemr.stop()
+                return
+            # self.currentIndex +=1
+            # self.currentIndex =
+            self.collpseTime+=1
+            unSelectIndex = self.DoubleModHash(self.prvIndex)
+            self.currentIndex = unSelectIndex[0]
+            if self.NumList[unSelectIndex[0]=="None"]:
+                self.currentIndex = unSelectIndex[0]
+            elif self.NumList[unSelectIndex[1]=="None"]:
+                self.currentIndex = unSelectIndex[1]
+            self.prvIndex = self.currentIndex
+            self.MoveCenter()
+            self.message.message.emit()
+            return
+        self.NumList[self.currentIndex] = self.Target
+        self.repaint()
+        self.MoveCenter()
+        self.capacity+=1
+        self.message.message.emit()
+        self.DoubleCollideTiemr.stop()
     def LineCollide(self):
-        if self.currentIndex > len(self.NumList):
+        if self.currentIndex >=len(self.NumList):
+            self.message.stop.emit()
+            self.LineCollideTimer.stop()
+        if self.capacity == len(self.NumList):
             self.message.stop.emit()
             self.LineCollideTimer.stop()
         if self.NumList[self.currentIndex] != "None" :
             if(self.NumList[self.currentIndex]==self.Target):
                 self.LineCollideTimer.stop()
                 return
-            if(self.currentIndex== len(self.NumList)):
+            if(self.currentIndex== len(self.NumList)-1):
                 self.currentIndex = 0
+                return
+            self.prvIndex = self.currentIndex
             self.currentIndex +=1
             self.collpseTime+=1
             self.MoveCenter()

@@ -1,9 +1,9 @@
 from typing import List
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QObject, QRect, QPoint, QSize, Qt, QTimer, QThread
+from PyQt5.QtCore import QObject, QRect, QPoint, QSize, Qt, QTimer, QThread, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import  Figure
 from matplotlib import *
@@ -56,6 +56,8 @@ class sortThread(QThread):
         }
     def run(self):
         pass
+class signal(QObject):
+    changeinfo = pyqtSignal()
 class SrotedWay(QWidget):
     def __init__(self,parent):
         super(SrotedWay, self).__init__(parent)
@@ -72,6 +74,8 @@ class SrotedWay(QWidget):
         self.compare = 0
         self.move = 0
         self.resizeEvent = self.__myresize
+        self.changeinfo = signal()
+        self.IsContinue = True
     def BackStatus(self):
         self.RectList.clear()
         for i in self.PrvRectList:
@@ -166,12 +170,21 @@ class SrotedWay(QWidget):
         self.RectList[j].rect = QRect(QPoint(temp.x(),self.RectList[j].rect.y()),self.RectList[j].rect.size())
         self.RectList[i],self.RectList[j] = self.RectList[j],self.RectList[i]
         self.move +=2
+        self.changeinfo.changeinfo.emit()
         self.repaint()
+        QApplication.processEvents()
+        while not self.IsContinue:
+            QApplication.processEvents()
+        # self.update()
     def setValue(self,i,rect:Rect):
         rect = Rect(rect.num,QPoint(self.startPoint.x()+i*self.cellWidth,rect.rect.y()),rect.rect.size())
         self.RectList[i] = rect
         self.move+=1
+        self.changeinfo.changeinfo.emit()
         self.repaint()
+        QApplication.processEvents()
+        while not self.IsContinue:
+            QApplication.processEvents()
     def ShellSort(self):
         Length = len(self.RectList)
         D =  int(Length/2);

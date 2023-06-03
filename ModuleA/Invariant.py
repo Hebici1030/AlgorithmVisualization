@@ -20,6 +20,7 @@ class Invariant(QMainWindow):
         self.intimer.setSingleShot(100)
         self.intimer.timeout.connect(self.InitalUI)
         self.intimer.start()
+
         self.ui.SpeedSlider.setRange(0,10)
         self.ui.SpeedSlider.setValue(5)
     def InitalUI(self):

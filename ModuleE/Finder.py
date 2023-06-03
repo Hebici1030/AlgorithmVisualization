@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import *
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from ModuleBase.BaseObject import QCustomizeList, ArrowLabel, DataGenerator, SearchWay, QCustomizeHash, QCustomizeLabel
+from ModuleE.Base import CustomizeFunction
 from ModuleE.UI import Ui_UI
 
 
@@ -29,7 +30,6 @@ class Finder(QMainWindow):
         self.ui.HashFuntion.addItem(self.search.MODSEARCH)
         self.ui.Collapes.addItem(self.search.LINEARPROBING)
         self.ui.Collapes.addItem(self.search.QUADRATICPROBING)
-        # self.ui.Collapes.addItem(self.search.SEPARATECHAING)
         self.LeftIndex = 0
         self.RightIndex = 0
         self.ordered = False
@@ -49,16 +49,20 @@ class Finder(QMainWindow):
         self.map = None
         self.mapfunction = None
         self.time = 0
+        self.checkInputTimer = QTimer()
+        self.hashMonitor = CustomizeFunction()
+        self.CheckHashTimer()
     def InitiPlot(self):
         plt.ion()
         matplotlib.rc("font",family='YouYuan')
         self.fig,self.pax = plt.subplots()
         self.pax.bar(self.ax,self.ay)
         self.pax.set_xlabel("FindWay")
-        self.pax.set_ylabel("Way")
+        self.pax.set_ylabel("Movemen(/times)")
         self.pax.set_title("Times")
         self.canvas = FigureCanvas(self.fig)
         self.ui.verticalLayout_6.addWidget(self.canvas)
+
     def initalUI(self):
         index = self.ui.tabWidget.currentIndex()
         if index==0:
@@ -68,13 +72,14 @@ class Finder(QMainWindow):
             self.Arrow.show()
             self.list.show()
         elif index==1:
-
             self.map = QCustomizeHash(parent=self.ui.HashWidget)
             self.mapfunction = QCustomizeLabel(str=" Key:", parent=self.ui.HashWidget)
             self.map.show()
             self.map.message.message.connect(self.MapInfo)
             self.map.message.stop.connect(self.stopA)
             self.mapfunction.show()
+            # self.CheckHashTimer()
+            # self.ui.Collapes.currentIndexChanged.connect()
     def stopA(self):
         self.showMessage("无法找到空槽用于插入当前值")
     def changeUI(self,index):
@@ -99,6 +104,8 @@ class Finder(QMainWindow):
         self.map.message.message.connect(self.MapInfo)
         self.map.message.stop.connect(self.stopA)
         self.mapfunction.show()
+        # self.CheckHashTimer()
+        # self.ui.Collapes.currentIndexChanged.connect()
     def MapInfo(self):
         temp = self.MapDetail()
         str = "哈希表Size:{}\n" \
@@ -121,7 +128,6 @@ class Finder(QMainWindow):
                 continue
             str+="key:{}->Value:{},".format(i,self.map.NumList[i])
         return "[" + str[0:-1] + "]"
-
     def connectSlot(self):
         self.ui.ListInital.editingFinished.connect(self.InitalList)
         self.AnimationTimer.timeout.connect(self.FindTarget)
@@ -131,7 +137,8 @@ class Finder(QMainWindow):
         self.ui.tabWidget.currentChanged.connect(self.UIrepaint)
         self.ui.MapSearch.clicked.connect(self.hashFind)
         self.ui.tabWidget.currentChanged.connect(self.changeUI)
-
+        self.ui.AddHashFunction.clicked.connect(self.AddHashFunction)
+        self.ui.ClearHashFunction.clicked.connect(self.ClearHashInput)
     def UIrepaint(self,index):
         if(index==0):
             self.ui.widget.update()
@@ -140,6 +147,8 @@ class Finder(QMainWindow):
     def InitalHash(self):
         str = self.ui.HashSize.text()
         if str=='':
+            return
+        if not str.isdigit():
             return
         size = int(self.ui.HashSize.text())
         self.map.setSize(size=size)
@@ -159,11 +168,18 @@ class Finder(QMainWindow):
     def HashFindTarget(self):
         if self.ui.KeyEditor.text() == "":
             return
+        if  not self.ui.KeyEditor.text().isdigit():
+            return
         self.MapInfo()
         self.map.collpseTime=0
         key = int(self.ui.KeyEditor.text())
         self.mapfunction.setText("Key:{}".format(key))
-        index = self.map.ModHash(key)
+        if self.ui.HashFuntion.currentText() == "取余法":
+            index = self.map.ModHash(key)
+        else:
+            funcName = self.hashMonitor.name_fundef(self.ui.HashFuntion.currentText())
+            index = self.hashMonitor.globals_dict[funcName](key)
+        self.map.prvIndex = self.map.currentIndex
         self.map.currentIndex = index
         self.map.MoveCenter()
         self.MapInfo()
@@ -177,10 +193,8 @@ class Finder(QMainWindow):
             self.map.Target = key
             if(self.ui.Collapes.currentText()==self.search.LINEARPROBING):
                 self.map.LineCollideTimer.start()
-            # elif (self.ui.Collapes.currentText()==self.search.SEPARATECHAING):
-            #     print("进入链表碰撞")
             else:
-                print("进入二次碰撞")
+                self.map.DoubleCollideTiemr.start()
     def hashInsert(self):
         self.HashInsertTarget()
         # self.map.currentIndex = random.randint(0,9)
@@ -190,9 +204,15 @@ class Finder(QMainWindow):
         if self.ui.KeyValue.text()=='':
             self.showMessage("请先输入需要查找的数值")
             return
+        if not self.ui.KeyValue.text().isdigit():
+            return
         key = int(self.ui.KeyValue.text())
-
-        index = self.map.ModHash(key)
+        if self.ui.HashFuntion.currentText() == "取余法":
+            index = self.map.ModHash(key)
+        else:
+            funcName = self.hashMonitor.name_fundef(self.ui.HashFuntion.currentText())
+            index = self.hashMonitor.globals_dict[funcName](key)
+        self.map.prvIndex = self.map.currentIndex
         self.map.currentIndex = index
         self.map.MoveCenter()
         if(self.map.NumList[index]=="None"):
@@ -201,17 +221,22 @@ class Finder(QMainWindow):
             self.map.capacity+=1
             self.map.repaint()
             self.map.MoveCenter()
+            self.MapInfo()
             return
         if(self.map.NumList[index]!="None"):
             self.showMessage("当前下标内容:{}为{}，发生了哈希碰撞,调用碰撞处理方法".format(index, self.map.NumList[index],
                                                                     self.ui.Collapes.currentText()))
             if(self.map.NumList[index]==key):
                 self.showMessage("当前下标内容:{}为{}，与查找对象相同，停止哈希".format(index, self.map.NumList[index],))
+                self.MapInfo()
                 return
             self.map.Target = key
-            self.map.LineCollideTimer.start()
+            if (self.ui.Collapes.currentText() == self.search.LINEARPROBING):
+                self.map.LineCollideTimer.start()
+            else:
+                self.map.DoubleCollideTiemr.start()
+            self.MapInfo()
         self.MapInfo()
-
     def InitalList(self):
         if self.ui.ListInital.text() == '' :
             return
@@ -224,7 +249,6 @@ class Finder(QMainWindow):
         self.RightIndex = len(self.list.NumList)
         self.list.repaint()
         self.ordered = False
-
     #currentIndex下标，RectList为窗口.如果
     def FindTarget(self):
         if(self.ui.SearchWay.currentText()==SearchWay().LINERSEARCH):
@@ -287,6 +311,7 @@ class Finder(QMainWindow):
             self.list.currentRectIndex = 0
             self.AnimationTimer.stop()
             return
+
         self.list.currentIndex += 1
         self.list.Windowindex +=1
         self.list.currentRectIndex += 1
@@ -303,7 +328,40 @@ class Finder(QMainWindow):
         animation.start()
     def showMessage(self,messgae:str):
         self.statusBar().showMessage(messgae,5000)
-
+    def CheckHashTimer(self):
+        self.hashTimer = QTimer()
+        self.hashTimer.setInterval(1000)
+        self.hashTimer.timeout.connect(self.CheckHashFunction)
+        self.hashTimer.start()
+    def CheckHashFunction(self):
+        str = self.ui.FunctionPlainTextEdit.toPlainText()
+        if self.ui.FunctionPlainTextEdit.toPlainText() == '':
+            return
+        if self.hashMonitor.cheakStr(str):
+            self.ui.FunctionPlainTextEdit.setStyleSheet( "border: 2px solid #00ffff;")
+            self.ui.FunctionPlainTextEdit.show()
+        else:
+            self.ui.FunctionPlainTextEdit.setStyleSheet("border: 2px solid red;")
+            self.ui.FunctionPlainTextEdit.show()
+    def ClearHashInput(self):
+        self.ui.FunctionPlainTextEdit.clear()
+    def AddHashFunction(self):
+        if self.ui.FunName.text() == '':
+            self.showMessage("请输出函数名")
+            return
+        func = self.ui.FunctionPlainTextEdit.toPlainText()
+        if self.ui.FunctionPlainTextEdit.toPlainText() == '':
+            self.showMessage("请输入完整哈希函数，入参为Key")
+            return
+        if not self.hashMonitor.cheakStr(func):
+            self.showMessage("哈希函数格式有误")
+            return
+        name = self.ui.FunName.text()
+        if name in self.hashMonitor.name_fundef.keys():
+            self.showMessage("{}函数名重复请更改".format(name))
+            return
+        self.ui.HashFuntion.addItem(name)
+        self.hashMonitor.Define(func,name)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

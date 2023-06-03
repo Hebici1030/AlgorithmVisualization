@@ -130,6 +130,8 @@ class ThreeNotation(QMainWindow):
             self.factory.notations.getBigO()
             self.factory.notations.getTheta()
             self.factory.notations.getAcurateTheta()
+            self.factory.notations.getUpNotation()
+            self.factory.notations.getDownNotation()
             BigO = ""
             if re.search(",",self.factory.notations.biggest.notation):
                 BigO = self.factory.notations.biggest.notation.split(",")[0]
@@ -143,11 +145,32 @@ class ThreeNotation(QMainWindow):
             self.ui.BigDispalyer.setText("O({}),Co={},No={}".format(BigO,self.factory.notations.BigOC0.__str__()\
                                                                     ,self.factory.notations.BigON0.__str__()))
 
-            self.ui.OmigaDispalyer.setText("Θ({})".format(Omiga))
+            self.ui.OmigaDispalyer.setText("{}".format(Omiga))
 
-            self.ui.ThetaDispalyer.setText("Ω({}),Co={},No={}".format(Theta,self.factory.notations.ThetaCo\
+            self.ui.ThetaDispalyer.setText("Θ({}),Co={},No={}".format(Theta,self.factory.notations.ThetaCo\
                                                                       ,self.factory.notations.ThetaNo))
+            OmiegaUp = ""
+            OmegaDown = ""
 
+            for i in self.factory.notations.UpThetaNotations:
+                if re.search(",", i.notation):
+                    OmiegaUp+= i.notation.split(",")[0]
+                else:
+                    OmiegaUp += i.notation
+                OmiegaUp+="+"
+            for i in self.factory.notations.DownThetaNoetations:
+                if re.search(",", i.notation):
+                    OmegaDown += i.notation.split(",")[0]
+                else:
+                    OmegaDown += i.notation
+                OmegaDown += "+"
+            if len(OmiegaUp)>0:
+                OmiegaUp = OmiegaUp[0:-1]
+                OmegaDown = OmegaDown[0:-1]
+            self.ui.OmegaUp.setText("Ω（{}）,Co={},No={}".format(OmiegaUp,self.factory.notations.UpThetaCo,
+                                                               self.factory.notations.UpThetaN0))
+            self.ui.OmegaDown.setText("Ω（{}）,Co={},No={}".format(OmegaDown,self.factory.notations.DownTehtaC0,
+                                                               self.factory.notations.DownThetaNo))
             self.PlotMonitor.asign.sign.emit()
     def NBtn(self):
         if self.ui.MultEditor.text() == "":
@@ -172,7 +195,6 @@ class ThreeNotation(QMainWindow):
         self.factory.addSingleNotation("LogN,m={}".format(mult))
     def Constant(self):
         str = self.ui.ConstantEditor.text()
-        print(str)
         if str.isdigit():
             self.function.append(str.__str__())
             self.factory.addSingleNotation(str.__str__())

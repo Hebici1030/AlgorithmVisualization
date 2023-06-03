@@ -197,7 +197,7 @@
                <item>
                 <widget class="QPushButton" name="PauseBtn">
                  <property name="text">
-                  <string>暂停排序</string>
+                  <string>暂停/继续</string>
                  </property>
                 </widget>
                </item>

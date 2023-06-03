@@ -96,7 +96,7 @@ class Notation:
                         self.biggest = notation
 
     def deltail(self):
-        print(len(self.notations))
+
         if (isinstance(self.notations[-1],ConstantNotation)):
             self.total-= int(self.notations[-1].Number)
         if  isinstance(self.notations[-1],ConstantNotation) or isinstance(self.notations[-1],FactorialNotation):
@@ -116,14 +116,6 @@ class Notation:
         self.UpThetaNotations=[]
         for i in self.notations:
             self.UpThetaNotations.append(i)
-        # if len(self.notations) >1:
-        #     p = -1
-        #     for i in self.notations:
-        #         if i.priority == 1:
-        #             continue
-        #         if i.priority > p and i.priority != self.biggest.priority:
-        #             self.UpThetaNotations.append(copy(i))
-        #             break;
         if len(self.notations)>1:
             mp = self.biggest.priority
             index = -1
@@ -149,8 +141,8 @@ class Notation:
                     index = i
             if index !=-1:
                 self.DownThetaNoetations.append(copy(self.notations[i]))
-        self.UpThetaCo = 1
-        self.UpThetaN0 = 0
+        self.DownTehtaC0 = 1
+        self.DownThetaNo = 0
     def getUpThetaCaculate(self,N):
         res = 0
         for i in self.UpThetaNotations:
